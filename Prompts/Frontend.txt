@@ -1,0 +1,872 @@
+ROLE
+
+You are a Principal Flutter Architect and Senior Frontend Engineer with expertise in:
+
+* Flutter 3.x
+* Dart 3
+* Riverpod
+* Dio
+* Freezed
+* JsonSerializable
+* GoRouter
+* CustomPainter
+* InteractiveViewer
+* Canvas Rendering
+* Game Telemetry Visualization
+* GIS-style Interactive Maps
+* High Performance Desktop/Web Applications
+
+Your task is to generate a COMPLETE production-ready Flutter Web application for a technical assessment project.
+
+The backend is being developed by a separate AI and shares NO MEMORY with you.
+
+You must therefore rely entirely on the API contracts and specifications defined below.
+
+Generate real production code.
+
+Do NOT generate pseudocode.
+
+Do NOT leave TODOs.
+
+Do NOT leave placeholders.
+
+Every file must be complete and executable.
+
+========================================================
+PROJECT OVERVIEW
+================
+
+Project Name:
+
+LILA BLACK Analytics
+
+Purpose:
+
+A web-based visualization platform that allows Level Designers to explore player behavior from real production gameplay data.
+
+The application visualizes:
+
+* Player movement
+* Bot movement
+* Combat events
+* Loot events
+* Storm deaths
+* Match replay
+* Heatmaps
+* Match statistics
+
+Primary target:
+
+Flutter Web Desktop
+
+Secondary target:
+
+Windows Desktop
+
+========================================================
+ASSESSMENT REQUIREMENTS
+=======================
+
+The application must support:
+
+1. Display player journeys on minimaps.
+
+2. Distinguish humans from bots visually.
+
+3. Show event markers:
+
+* Loot
+* Kill
+* Killed
+* BotKill
+* BotKilled
+* KilledByStorm
+
+4. Filter by:
+
+* Map
+* Date
+* Match
+
+5. Timeline replay.
+
+6. Playback controls.
+
+7. Heatmap overlays.
+
+8. Match statistics.
+
+9. Public deployment.
+
+========================================================
+IMPORTANT ARCHITECTURAL RULE
+============================
+
+Backend already performs:
+
+* Parquet loading
+* Event decoding
+* Match reconstruction
+* Coordinate conversion
+* Statistics generation
+* Heatmap generation
+
+Flutter MUST NEVER:
+
+* Read parquet files
+* Calculate coordinate conversion
+* Generate heatmaps
+
+Flutter is ONLY responsible for:
+
+* Rendering
+* Playback
+* User interaction
+* API consumption
+
+========================================================
+BACKEND API CONTRACT
+====================
+
+BASE URL
+
+Configurable through environment/config.
+
+========================================================
+
+GET /maps
+
+Response:
+
+[
+"AmbroseValley",
+"GrandRift",
+"Lockdown"
+]
+
+========================================================
+
+GET /dates
+
+Response:
+
+[
+"February_10",
+"February_11",
+"February_12",
+"February_13",
+"February_14"
+]
+
+========================================================
+
+GET /matches
+
+Optional Query Parameters:
+
+map_id
+date
+
+Response:
+
+[
+"match_id_1",
+"match_id_2"
+]
+
+========================================================
+
+GET /matches/{match_id}
+
+Response:
+
+{
+"match_id":"abc",
+"map_id":"AmbroseValley",
+"events":[]
+}
+
+========================================================
+
+GET /matches/{match_id}/stats
+
+Response:
+
+{
+"match_id":"abc",
+"map_id":"AmbroseValley",
+
+"total_humans":15,
+"total_bots":40,
+
+"kills":23,
+"deaths":18,
+"loots":95,
+
+"storm_deaths":3,
+
+"duration_seconds":950
+}
+
+========================================================
+
+GET /heatmap
+
+Query:
+
+map_id
+heatmap_type
+
+heatmap_type values:
+
+TRAFFIC
+KILLS
+DEATHS
+LOOT
+
+Response:
+
+PNG Image
+
+========================================================
+DATA MODELS
+===========
+
+EventModel
+
+{
+user_id:String,
+
+match_id:String,
+
+map_id:String,
+
+x:double,
+y:double,
+z:double,
+
+pixel_x:double,
+pixel_y:double,
+
+ts:int,
+
+event:String,
+
+is_bot:bool
+}
+
+========================================================
+
+MatchResponse
+
+{
+match_id:String,
+
+map_id:String,
+
+events:[EventModel]
+}
+
+========================================================
+
+MatchStatsResponse
+
+{
+match_id:String,
+
+map_id:String,
+
+total_humans:int,
+
+total_bots:int,
+
+kills:int,
+
+deaths:int,
+
+loots:int,
+
+storm_deaths:int,
+
+duration_seconds:int
+}
+
+========================================================
+MINIMAP ASSETS
+==============
+
+assets/minimaps/
+
+AmbroseValley_Minimap.png
+
+GrandRift_Minimap.png
+
+Lockdown_Minimap.jpg
+
+========================================================
+IMPORTANT
+=========
+
+Coordinates are already converted.
+
+Backend provides:
+
+pixel_x
+pixel_y
+
+directly.
+
+DO NOT perform coordinate conversion.
+
+Render directly using:
+
+pixel_x
+pixel_y
+
+========================================================
+VISUALIZATION RULES
+===================
+
+Humans
+
+* Blue Path
+* Solid Line
+
+Bots
+
+* Orange Path
+* Dashed Line
+
+========================================================
+
+Loot
+
+Green Circle
+
+========================================================
+
+Kill
+
+Red X
+
+========================================================
+
+Killed
+
+Black Skull
+
+========================================================
+
+BotKill
+
+Orange X
+
+========================================================
+
+BotKilled
+
+Purple Skull
+
+========================================================
+
+KilledByStorm
+
+Yellow Triangle
+
+========================================================
+REPLAY REQUIREMENTS
+===================
+
+Timeline replay is mandatory.
+
+Must support:
+
+Play
+
+Pause
+
+Seek
+
+Speed
+
+Playback Speeds:
+
+1x
+2x
+5x
+10x
+
+========================================================
+
+Replay Logic
+
+Visible events:
+
+event.ts <= currentPlaybackTime
+
+Only visible events should render.
+
+========================================================
+HEATMAP REQUIREMENTS
+====================
+
+Heatmaps are generated by backend.
+
+Flutter only displays PNG overlays.
+
+Must support:
+
+Traffic
+
+Kills
+
+Deaths
+
+Loot
+
+========================================================
+
+Opacity Slider
+
+0% → 100%
+
+========================================================
+
+Heatmap Toggle
+
+ON/OFF
+
+========================================================
+FILTER REQUIREMENTS
+===================
+
+Map Filter
+
+Date Filter
+
+Match Filter
+
+========================================================
+
+Changing Map
+
+Reload matches.
+
+========================================================
+
+Changing Date
+
+Reload matches.
+
+========================================================
+
+Changing Match
+
+Load replay data.
+
+========================================================
+MATCH STATISTICS PANEL
+======================
+
+Display:
+
+Match ID
+
+Map
+
+Humans
+
+Bots
+
+Kills
+
+Deaths
+
+Loot
+
+Storm Deaths
+
+Duration
+
+========================================================
+PERFORMANCE REQUIREMENTS
+========================
+
+Dataset:
+
+~89,000 events
+
+Must feel smooth.
+
+========================================================
+
+Use:
+
+CustomPainter
+
+RepaintBoundary
+
+Riverpod
+
+Caching
+
+const widgets
+
+========================================================
+
+Avoid:
+
+setState-heavy architecture
+
+Large widget rebuilds
+
+Expensive computations in build()
+
+========================================================
+STATE MANAGEMENT
+================
+
+Use Riverpod.
+
+Create providers for:
+
+ApiClient
+
+Map List
+
+Date List
+
+Match List
+
+Selected Match
+
+Match Data
+
+Statistics
+
+Heatmap
+
+Replay Controller
+
+========================================================
+ROUTING
+=======
+
+Use GoRouter.
+
+Routes:
+
+/
+
+DashboardScreen
+
+========================================================
+PROJECT STRUCTURE
+=================
+
+lib/
+
+├── main.dart
+
+├── app/
+
+│   ├── app.dart
+
+├── config/
+
+│   ├── app_config.dart
+
+├── core/
+
+│   ├── api/
+│   │   ├── api_client.dart
+
+│   ├── models/
+│   │   ├── event_model.dart
+│   │   ├── match_response.dart
+│   │   ├── match_stats_response.dart
+
+│   ├── repositories/
+│   │   ├── telemetry_repository.dart
+
+│   ├── providers/
+│   │   ├── api_provider.dart
+
+├── features/
+
+│   ├── dashboard/
+
+│   │   ├── dashboard_screen.dart
+
+│   │   ├── widgets/
+│   │       ├── filter_panel.dart
+│   │       ├── stats_panel.dart
+│   │       ├── replay_controls.dart
+
+│   ├── minimap/
+
+│   │   ├── minimap_viewer.dart
+
+│   │   ├── painters/
+│   │       ├── path_painter.dart
+│   │       ├── event_painter.dart
+
+│   ├── replay/
+
+│   │   ├── replay_controller.dart
+
+│   ├── heatmap/
+
+│   │   ├── heatmap_overlay.dart
+
+├── routes/
+
+│   ├── app_router.dart
+
+========================================================
+API CLIENT REQUIREMENTS
+=======================
+
+Create ApiClient.
+
+Methods:
+
+Future<List<String>> getMaps()
+
+Future<List<String>> getDates()
+
+Future<List<String>> getMatches({
+String? mapId,
+String? date,
+})
+
+Future<MatchResponse> getMatch(
+String matchId,
+)
+
+Future<MatchStatsResponse> getStats(
+String matchId,
+)
+
+Future<Uint8List> getHeatmap(
+String mapId,
+String heatmapType,
+)
+
+========================================================
+REPOSITORY REQUIREMENTS
+=======================
+
+Create TelemetryRepository.
+
+Must wrap ApiClient.
+
+Must handle:
+
+Error mapping
+
+Caching
+
+Response parsing
+
+========================================================
+REPLAY CONTROLLER REQUIREMENTS
+==============================
+
+Create ReplayController using Riverpod.
+
+Capabilities:
+
+play()
+
+pause()
+
+seek()
+
+setSpeed()
+
+reset()
+
+========================================================
+
+Expose:
+
+currentPlaybackTime
+
+visibleEvents
+
+isPlaying
+
+speed
+
+========================================================
+
+visibleEvents must be derived from:
+
+event.ts <= currentPlaybackTime
+
+========================================================
+MINIMAP VIEWER REQUIREMENTS
+===========================
+
+Use:
+
+InteractiveViewer
+
+Support:
+
+Pan
+
+Zoom
+
+========================================================
+
+Layers:
+
+Layer 1
+
+Minimap image
+
+Layer 2
+
+Heatmap overlay
+
+Layer 3
+
+Player paths
+
+Layer 4
+
+Event markers
+
+========================================================
+
+Must use:
+
+CustomPainter
+
+========================================================
+PATH PAINTER REQUIREMENTS
+=========================
+
+Group events by player.
+
+Draw paths.
+
+Human:
+
+Blue solid line
+
+Bot:
+
+Orange dashed line
+
+========================================================
+EVENT PAINTER REQUIREMENTS
+==========================
+
+Render all markers.
+
+Use optimized canvas drawing.
+
+Do not use individual widgets.
+
+Draw directly using Canvas.
+
+========================================================
+HEATMAP OVERLAY REQUIREMENTS
+============================
+
+Fetch PNG.
+
+Cache PNG.
+
+Render via Image.memory.
+
+Opacity control.
+
+========================================================
+DASHBOARD REQUIREMENTS
+======================
+
+Single-screen experience.
+
+Layout:
+
+Top Toolbar
+
+Map Filter
+
+Date Filter
+
+Match Selector
+
+========================================================
+
+Left Panel
+
+Statistics
+
+Replay Controls
+
+========================================================
+
+Center
+
+Minimap Viewer
+
+========================================================
+
+Responsive for:
+
+Desktop
+
+Large Tablet
+
+========================================================
+CODE QUALITY REQUIREMENTS
+=========================
+
+Use:
+
+Freezed
+
+JsonSerializable
+
+Riverpod
+
+Strong typing
+
+Extension methods where useful
+
+Meaningful comments
+
+Error boundaries
+
+Loading states
+
+Empty states
+
+========================================================
+FINAL OUTPUT REQUIREMENT
+========================
+
+Generate the entire Flutter application file-by-file.
+
+For every file:
+
+1. Show file path.
+2. Explain purpose briefly.
+3. Generate complete code.
+
+Do not skip files.
+
+Do not summarize.
+
+Start with:
+
+pubspec.yaml
+
+Then continue in folder structure order.
+
+END.
