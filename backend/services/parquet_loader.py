@@ -17,36 +17,18 @@ class ParquetLoader:
         print(f"data path >>>>>>>>{PLAYER_DATA_DIR}")
         self._df: pd.DataFrame = pd.DataFrame()
 
-    def load_data(self) -> None:
+    def load_data(self, folder_name) -> None:
         """Reads all parquet files, processes rules, and loads them into memory."""
         logger.info(f"Scanning for parquet files in {PLAYER_DATA_DIR}...")
         
         if not PLAYER_DATA_DIR.exists():
             raise FileNotFoundError(f"Data directory not found: {PLAYER_DATA_DIR}")
 
-        file_paths = list(PLAYER_DATA_DIR.rglob("*.nakama-0"))
-        
-        if not file_paths:
-            logger.warning("No parquet files found in the dataset directory.")
-            return
-
-        dataframes = []
-        for file in file_paths:
-            try:
-                # Load individual file
-                temp_df = pd.read_parquet(file)
-                # Extract date from parent folder (e.g., February_10)
-                temp_df['date'] = file.parent.name
-                dataframes.append(temp_df)
-            except Exception as e:
-                logger.error(f"Error reading parquet file {file.name}: {e}")
-                
-        if not dataframes:
-            raise ValueError("No valid data could be loaded from the parquet files.")
-
-        # Concatenate all files into a single dataframe
-        self._df = pd.concat(dataframes, ignore_index=True)
-        
+        try:
+            self._df = pd.read_parquet(PLAYER_DATA_DIR + f"/{folder_name}", engine="pyarrow")
+        except Exception as e:
+            logger.error(f"Failed to load parquet dataset: {e}")
+            raise
         # 1. Decode event bytes
         if self._df['event'].apply(type).eq(bytes).any():
             self._df['event'] = self._df['event'].str.decode('utf-8')

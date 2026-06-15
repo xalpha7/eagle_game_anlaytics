@@ -13,7 +13,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def loading_match_data(app: FastAPI):
     """
     Application lifecycle hook. 
     Loads the Parquet datasets entirely into memory on startup and sets application state.
@@ -41,7 +41,7 @@ app = FastAPI(
     title="LILA BLACK Analytics API",
     description="Backend API providing endpoints to power gameplay visualization.",
     version="1.0.0",
-    lifespan=lifespan
+    # lifespan=loading_match_data
 )
 
 # Enable CORS for decoupled AI frontend integration
