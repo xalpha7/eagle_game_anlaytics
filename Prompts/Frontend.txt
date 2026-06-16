@@ -1,872 +1,93 @@
 ROLE
+You are a Flutter Frontend Developer. Your task is to generate a simple, compact, and highly efficient production-ready Flutter Web/Desktop application for a telemetry visualization project.
 
-You are a Principal Flutter Architect and Senior Frontend Engineer with expertise in:
-
-* Flutter 3.x
-* Dart 3
-* Riverpod
-* Dio
-* Freezed
-* JsonSerializable
-* GoRouter
-* CustomPainter
-* InteractiveViewer
-* Canvas Rendering
-* Game Telemetry Visualization
-* GIS-style Interactive Maps
-* High Performance Desktop/Web Applications
-
-Your task is to generate a COMPLETE production-ready Flutter Web application for a technical assessment project.
-
-The backend is being developed by a separate AI and shares NO MEMORY with you.
-
-You must therefore rely entirely on the API contracts and specifications defined below.
-
-Generate real production code.
-
-Do NOT generate pseudocode.
-
-Do NOT leave TODOs.
-
-Do NOT leave placeholders.
-
-Every file must be complete and executable.
+The code must be exceptionally simple so that a beginner coder can read, understand, and modify it easily. 
+DO NOT use complex boilerplate architectures, code generators, or unnecessary abstractions.
+DO NOT generate pseudocode, placeholders, or TODO comments. Every file must be fully implemented and runnable.
 
 ========================================================
 PROJECT OVERVIEW
 ================
+Project Name: LILA BLACK Analytics
+Purpose: A single-page dashboard allowing Level Designers to view player data by simply choosing a Date from a single dropdown menu.
 
-Project Name:
-
-LILA BLACK Analytics
-
-Purpose:
-
-A web-based visualization platform that allows Level Designers to explore player behavior from real production gameplay data.
-
-The application visualizes:
-
-* Player movement
-* Bot movement
-* Combat events
-* Loot events
-* Storm deaths
-* Match replay
-* Heatmaps
-* Match statistics
-
-Primary target:
-
-Flutter Web Desktop
-
-Secondary target:
-
-Windows Desktop
+The application connects to a backend server via WebSockets. When a user selects a date (e.g., "February_10"), the backend automatically streams the available maps, match statistics, event points, and pre-computed heatmaps.
 
 ========================================================
-ASSESSMENT REQUIREMENTS
+ASSESSMENT & UI REQUIREMENTS
 =======================
-
-The application must support:
-
-1. Display player journeys on minimaps.
-
-2. Distinguish humans from bots visually.
-
-3. Show event markers:
-
-* Loot
-* Kill
-* Killed
-* BotKill
-* BotKilled
-* KilledByStorm
-
-4. Filter by:
-
-* Map
-* Date
-* Match
-
-5. Timeline replay.
-
-6. Playback controls.
-
-7. Heatmap overlays.
-
-8. Match statistics.
-
-9. Public deployment.
+1. Dashbord Shell: A clean desktop layout featuring:
+   * Top bar containing a single Dropdown menu for Date selection.
+   * Side panel displaying Match Statistics.
+   * Central visualization viewport using InteractiveViewer.
+2. Minimap Canvas: Renders the map background along with historical player paths and events.
+3. Replay Timeline: Simple playback controls (Play, Pause, Progress Slider) to playback match events over time based on timestamps.
+4. Heatmap Toggle: A checkbox/switch to overlay a transparent heatmap image with an opacity slider.
 
 ========================================================
-IMPORTANT ARCHITECTURAL RULE
+STRICTLY FORBIDDEN PACKAGES
 ============================
-
-Backend already performs:
-
-* Parquet loading
-* Event decoding
-* Match reconstruction
-* Coordinate conversion
-* Statistics generation
-* Heatmap generation
-
-Flutter MUST NEVER:
-
-* Read parquet files
-* Calculate coordinate conversion
-* Generate heatmaps
-
-Flutter is ONLY responsible for:
-
-* Rendering
-* Playback
-* User interaction
-* API consumption
+Do NOT use: `freezed`, `build_runner`, `json_serializable`, `riverpod`, `go_router`.
+Use plain standard Dart serialization (`fromJson` methods manually written inside the model classes).
 
 ========================================================
-BACKEND API CONTRACT
-====================
+VISUALIZATION & MARKS RULES
+===========================
+Map Size: 1024 x 1024 (Rendered directly using pre-calculated `pixel_x` and `pixel_y` coordinates sent by the backend).
 
-BASE URL
-
-Configurable through environment/config.
-
-========================================================
-
-GET /maps
-
-Response:
-
-[
-"AmbroseValley",
-"GrandRift",
-"Lockdown"
-]
+Color & Icon Mapping:
+* Humans: Blue Path, Solid Line
+* Bots: Orange Path, Dashed Line
+* Loot: Green Circle
+* Kill: Red X mark
+* Killed: Black Cross/Skull shape
+* BotKill: Orange X mark
+* BotKilled: Purple Cross/Skull shape
+* KilledByStorm: Yellow Triangle
 
 ========================================================
-
-GET /dates
-
-Response:
-
-[
-"February_10",
-"February_11",
-"February_12",
-"February_13",
-"February_14"
-]
-
-========================================================
-
-GET /matches
-
-Optional Query Parameters:
-
-map_id
-date
-
-Response:
-
-[
-"match_id_1",
-"match_id_2"
-]
-
-========================================================
-
-GET /matches/{match_id}
-
-Response:
-
+WEBSOCKET PROTOCOL & INCOMING DATA FLOW
+=======================================
+On dropdown change, the app sends a single JSON message over WebSockets:
 {
-"match_id":"abc",
-"map_id":"AmbroseValley",
-"events":[]
+  "action": "fetch_date_data",
+  "date": "February_10"
 }
 
-========================================================
-
-GET /matches/{match_id}/stats
-
-Response:
-
-{
-"match_id":"abc",
-"map_id":"AmbroseValley",
-
-"total_humans":15,
-"total_bots":40,
-
-"kills":23,
-"deaths":18,
-"loots":95,
-
-"storm_deaths":3,
-
-"duration_seconds":950
-}
+The app must catch and handle four distinct incoming JSON message packets:
+1. "init_data": Updates the available dates array and sets the initial maps list.
+2. "match_stats": Contains a list of match performance metrics to display on the dashboard panel.
+3. "events_stream": Contains chronological gameplay coordinates sorted by timestamp used to drive the telemetry path replay.
+4. "heatmap_data": Provides base64-encoded PNG image strings ("data:image/png;base64,...") for traffic, kills, deaths, and loot.
 
 ========================================================
-
-GET /heatmap
-
-Query:
-
-map_id
-heatmap_type
-
-heatmap_type values:
-
-TRAFFIC
-KILLS
-DEATHS
-LOOT
-
-Response:
-
-PNG Image
-
-========================================================
-DATA MODELS
-===========
-
-EventModel
-
-{
-user_id:String,
-
-match_id:String,
-
-map_id:String,
-
-x:double,
-y:double,
-z:double,
-
-pixel_x:double,
-pixel_y:double,
-
-ts:int,
-
-event:String,
-
-is_bot:bool
-}
-
-========================================================
-
-MatchResponse
-
-{
-match_id:String,
-
-map_id:String,
-
-events:[EventModel]
-}
-
-========================================================
-
-MatchStatsResponse
-
-{
-match_id:String,
-
-map_id:String,
-
-total_humans:int,
-
-total_bots:int,
-
-kills:int,
-
-deaths:int,
-
-loots:int,
-
-storm_deaths:int,
-
-duration_seconds:int
-}
-
-========================================================
-MINIMAP ASSETS
-==============
-
-assets/minimaps/
-
-AmbroseValley_Minimap.png
-
-GrandRift_Minimap.png
-
-Lockdown_Minimap.jpg
-
-========================================================
-IMPORTANT
-=========
-
-Coordinates are already converted.
-
-Backend provides:
-
-pixel_x
-pixel_y
-
-directly.
-
-DO NOT perform coordinate conversion.
-
-Render directly using:
-
-pixel_x
-pixel_y
-
-========================================================
-VISUALIZATION RULES
-===================
-
-Humans
-
-* Blue Path
-* Solid Line
-
-Bots
-
-* Orange Path
-* Dashed Line
-
-========================================================
-
-Loot
-
-Green Circle
-
-========================================================
-
-Kill
-
-Red X
-
-========================================================
-
-Killed
-
-Black Skull
-
-========================================================
-
-BotKill
-
-Orange X
-
-========================================================
-
-BotKilled
-
-Purple Skull
-
-========================================================
-
-KilledByStorm
-
-Yellow Triangle
-
-========================================================
-REPLAY REQUIREMENTS
-===================
-
-Timeline replay is mandatory.
-
-Must support:
-
-Play
-
-Pause
-
-Seek
-
-Speed
-
-Playback Speeds:
-
-1x
-2x
-5x
-10x
-
-========================================================
-
-Replay Logic
-
-Visible events:
-
-event.ts <= currentPlaybackTime
-
-Only visible events should render.
-
-========================================================
-HEATMAP REQUIREMENTS
-====================
-
-Heatmaps are generated by backend.
-
-Flutter only displays PNG overlays.
-
-Must support:
-
-Traffic
-
-Kills
-
-Deaths
-
-Loot
-
-========================================================
-
-Opacity Slider
-
-0% → 100%
-
-========================================================
-
-Heatmap Toggle
-
-ON/OFF
-
-========================================================
-FILTER REQUIREMENTS
-===================
-
-Map Filter
-
-Date Filter
-
-Match Filter
-
-========================================================
-
-Changing Map
-
-Reload matches.
-
-========================================================
-
-Changing Date
-
-Reload matches.
-
-========================================================
-
-Changing Match
-
-Load replay data.
-
-========================================================
-MATCH STATISTICS PANEL
-======================
-
-Display:
-
-Match ID
-
-Map
-
-Humans
-
-Bots
-
-Kills
-
-Deaths
-
-Loot
-
-Storm Deaths
-
-Duration
-
-========================================================
-PERFORMANCE REQUIREMENTS
-========================
-
-Dataset:
-
-~89,000 events
-
-Must feel smooth.
-
-========================================================
-
-Use:
-
-CustomPainter
-
-RepaintBoundary
-
-Riverpod
-
-Caching
-
-const widgets
-
-========================================================
-
-Avoid:
-
-setState-heavy architecture
-
-Large widget rebuilds
-
-Expensive computations in build()
-
-========================================================
-STATE MANAGEMENT
-================
-
-Use Riverpod.
-
-Create providers for:
-
-ApiClient
-
-Map List
-
-Date List
-
-Match List
-
-Selected Match
-
-Match Data
-
-Statistics
-
-Heatmap
-
-Replay Controller
-
-========================================================
-ROUTING
-=======
-
-Use GoRouter.
-
-Routes:
-
-/
-
-DashboardScreen
-
-========================================================
-PROJECT STRUCTURE
-=================
+PROJECT STRUCTURE (STRICT ENFORCEMENT)
+======================================
+Keep the directory layout flat and highly straightforward:
 
 lib/
-
-├── main.dart
-
-├── app/
-
-│   ├── app.dart
-
-├── config/
-
-│   ├── app_config.dart
-
-├── core/
-
-│   ├── api/
-│   │   ├── api_client.dart
-
-│   ├── models/
-│   │   ├── event_model.dart
-│   │   ├── match_response.dart
-│   │   ├── match_stats_response.dart
-
-│   ├── repositories/
-│   │   ├── telemetry_repository.dart
-
-│   ├── providers/
-│   │   ├── api_provider.dart
-
-├── features/
-
-│   ├── dashboard/
-
-│   │   ├── dashboard_screen.dart
-
-│   │   ├── widgets/
-│   │       ├── filter_panel.dart
-│   │       ├── stats_panel.dart
-│   │       ├── replay_controls.dart
-
-│   ├── minimap/
-
-│   │   ├── minimap_viewer.dart
-
-│   │   ├── painters/
-│   │       ├── path_painter.dart
-│   │       ├── event_painter.dart
-
-│   ├── replay/
-
-│   │   ├── replay_controller.dart
-
-│   ├── heatmap/
-
-│   │   ├── heatmap_overlay.dart
-
-├── routes/
-
-│   ├── app_router.dart
+├── main.dart                (App setup, GetX route binding, and theme)
+├── websocket_service.dart   (Manages raw connection, listening, and broadcasting state changes)
+├── models.dart              (Compact definitions for EventModel and MatchStats)
+├── dashboard_controller.dart (State variables for active match, current time, playback controls, and toggles)
+└── views/
+    ├── dashboard_screen.dart (UI layout grid: Top dropdown bar, Side stats, Bottom controls)
+    ├── minimap_viewport.dart (InteractiveViewer handling base map, heatmap layer, and custom canvas)
+    └── telemetry_painter.dart(Single, unified CustomPainter drawing player paths and event icons)
 
 ========================================================
-API CLIENT REQUIREMENTS
-=======================
-
-Create ApiClient.
-
-Methods:
-
-Future<List<String>> getMaps()
-
-Future<List<String>> getDates()
-
-Future<List<String>> getMatches({
-String? mapId,
-String? date,
-})
-
-Future<MatchResponse> getMatch(
-String matchId,
-)
-
-Future<MatchStatsResponse> getStats(
-String matchId,
-)
-
-Future<Uint8List> getHeatmap(
-String mapId,
-String heatmapType,
-)
-
-========================================================
-REPOSITORY REQUIREMENTS
-=======================
-
-Create TelemetryRepository.
-
-Must wrap ApiClient.
-
-Must handle:
-
-Error mapping
-
-Caching
-
-Response parsing
-
-========================================================
-REPLAY CONTROLLER REQUIREMENTS
-==============================
-
-Create ReplayController using Riverpod.
-
-Capabilities:
-
-play()
-
-pause()
-
-seek()
-
-setSpeed()
-
-reset()
-
-========================================================
-
-Expose:
-
-currentPlaybackTime
-
-visibleEvents
-
-isPlaying
-
-speed
-
-========================================================
-
-visibleEvents must be derived from:
-
-event.ts <= currentPlaybackTime
-
-========================================================
-MINIMAP VIEWER REQUIREMENTS
-===========================
-
-Use:
-
-InteractiveViewer
-
-Support:
-
-Pan
-
-Zoom
-
-========================================================
-
-Layers:
-
-Layer 1
-
-Minimap image
-
-Layer 2
-
-Heatmap overlay
-
-Layer 3
-
-Player paths
-
-Layer 4
-
-Event markers
-
-========================================================
-
-Must use:
-
-CustomPainter
-
-========================================================
-PATH PAINTER REQUIREMENTS
-=========================
-
-Group events by player.
-
-Draw paths.
-
-Human:
-
-Blue solid line
-
-Bot:
-
-Orange dashed line
-
-========================================================
-EVENT PAINTER REQUIREMENTS
-==========================
-
-Render all markers.
-
-Use optimized canvas drawing.
-
-Do not use individual widgets.
-
-Draw directly using Canvas.
-
-========================================================
-HEATMAP OVERLAY REQUIREMENTS
-============================
-
-Fetch PNG.
-
-Cache PNG.
-
-Render via Image.memory.
-
-Opacity control.
-
-========================================================
-DASHBOARD REQUIREMENTS
-======================
-
-Single-screen experience.
-
-Layout:
-
-Top Toolbar
-
-Map Filter
-
-Date Filter
-
-Match Selector
-
-========================================================
-
-Left Panel
-
-Statistics
-
-Replay Controls
-
-========================================================
-
-Center
-
-Minimap Viewer
-
-========================================================
-
-Responsive for:
-
-Desktop
-
-Large Tablet
-
-========================================================
-CODE QUALITY REQUIREMENTS
-=========================
-
-Use:
-
-Freezed
-
-JsonSerializable
-
-Riverpod
-
-Strong typing
-
-Extension methods where useful
-
-Meaningful comments
-
-Error boundaries
-
-Loading states
-
-Empty states
+DETAILED FILE IMPLEMENTATION EXPECTATIONS
+=========================================
+1. main.dart: Basic setup pointing to DashboardScreen. 
+2. websocket_service.dart: Uses standard WebSocket or web_socket_channel to establish a stateful connection. Parses incoming text maps directly into data triggers.
+3. dashboard_controller.dart: Extends GetxController. Contains reactive variables (`.obs`) tracking timeline progress, playback status (playing/paused), selected match ID, and heatmap visibility states.
+4. views/: Uses plain, readable widgets wrapped inside basic `Obx()` hooks for dynamic updates without complex state patterns.
 
 ========================================================
 FINAL OUTPUT REQUIREMENT
 ========================
-
-Generate the entire Flutter application file-by-file.
-
-For every file:
-
-1. Show file path.
-2. Explain purpose briefly.
-3. Generate complete code.
-
-Do not skip files.
-
-Do not summarize.
-
-Start with:
-
-pubspec.yaml
-
-Then continue in folder structure order.
-
-END.
+Generate the entire frontend project file-by-file.
+For each file:
+1. Show the precise file path.
+2. Generate the complete code from scratch.
+Do not skip any files or simplify with comments like "// code remains the same". Start with pubspec.yaml.

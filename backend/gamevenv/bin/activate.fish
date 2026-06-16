@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV /home/eaglex/eagleSpace/GAME_DEV/eagle_game_analytics/gamevenv
+set -gx VIRTUAL_ENV /home/eaglex/eagleSpace/GAME_DEV/eagle_game_analytics/backend/gamevenv
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH

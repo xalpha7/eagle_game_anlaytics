@@ -1,789 +1,152 @@
 ROLE
+You are a Python Backend Engineer. Your task is to generate a simple, compact, and highly efficient production-ready backend for a technical assessment project.
 
-You are a Principal Backend Engineer with expertise in:
-
-* Python 3.12
-* FastAPI
-* PyArrow
-* Pandas
-* NumPy
-* Pillow
-* Geospatial Analytics
-* Game Telemetry Systems
-* Data Visualization Backends
-
-Your task is to generate a COMPLETE production-ready backend for a technical assessment project.
-
-The backend must be clean, maintainable, strongly typed, modular, and efficient.
-
-DO NOT generate pseudocode.
-
-DO NOT leave TODO comments.
-
-DO NOT generate placeholders.
-
-Every file must be fully implemented.
+The backend must be clean, easy for a beginner to understand, and strongly typed. 
+DO NOT use complex enterprise architectures, unnecessary abstractions, or excessive comments.
+DO NOT generate pseudocode, placeholders, or TODOs. 
 
 ========================================================
 PROJECT OVERVIEW
 ================
+Project Name: LILA BLACK Analytics
+Purpose: A simple WebSocket-based visualization backend that allows Level Designers to explore player behavior from real production gameplay data.
 
-Project Name:
-
-LILA BLACK Analytics
-
-Purpose:
-
-A web-based visualization platform that allows Level Designers to explore player behavior from real production gameplay data.
-
-The frontend is being developed by a separate AI and MUST consume only REST APIs.
-
-The frontend has NO SHARED MEMORY with you.
-
-Therefore:
-
-You must define and implement every API contract exactly as specified below.
+The frontend is being developed by a separate AI and will connect via WebSockets. It will simply send a requested "date" (folder name), and the backend must automatically compute and push all relevant data (maps, match stats, events, and heatmaps) back to the client.
 
 ========================================================
 ASSESSMENT REQUIREMENTS
 =======================
-
-The final application must support:
-
-1. Load and parse parquet gameplay data.
-
-2. Display player journeys on minimaps.
-
-3. Distinguish humans from bots.
-
-4. Show:
-
-* Loot
-* Kill
-* Killed
-* BotKill
-* BotKilled
-* KilledByStorm
-
-events.
-
-5. Filter by:
-
-* Map
-* Date
-* Match
-
-6. Replay a match over time.
-
-7. Generate heatmaps:
-
-* Traffic Heatmap
-* Kill Heatmap
-* Death Heatmap
-* Loot Heatmap
+1. Load and parse parquet gameplay data into memory.
+2. Distinguish humans from bots.
+3. Classify events: Loot, Kill, Killed, BotKill, BotKilled, KilledByStorm.
+4. Generate and send complete Match Statistics.
+5. Generate heatmaps (Traffic, Kill, Death, Loot) as base64 PNGs.
+6. Auto-stream all the above data to the client when a specific Date is requested over WebSockets.
 
 ========================================================
 DATASET STRUCTURE
 =================
+Folder: data/player_data/
+Contains date folders: February_10/, February_11/, etc.
+Inside are parquet files named: {user_id}_{match_id}.nakama-0
 
-Folder:
+Humans: user_id contains "-"
+Bots: user_id does NOT contain "-"
 
-data/
-
-Contains:
-
-player_data/
-
-February_10/
-February_11/
-February_12/
-February_13/
-February_14/
-
-Each file is parquet.
-
-File naming:
-
-{user_id}_{match_id}.nakama-0
-
-Examples:
-
-Human:
-
-f4e072fa-b7af-4761-b567-1d95b7ad0108_b71aaad8-aa62-4b3a-8534-927d4de18f22.nakama-0
-
-Bot:
-
-1440_d7e50fad-fb7a-4ed4-932f-e4ca9ff0c97b.nakama-0
+Parquet Schema Columns:
+user_id:str, match_id:str, map_id:str, x:float, y:float, z:float, ts:timestamp, event:bytes
 
 ========================================================
-BOT DETECTION RULE
-==================
+MINIMAP CONFIGURATION & MATH
+============================
+Map Size: 1024 x 1024
 
-Humans:
+AmbroseValley: scale=900, origin_x=-370, origin_z=-473
+GrandRift: scale=581, origin_x=-290, origin_z=-290
+Lockdown: scale=1000, origin_x=-500, origin_z=-500
 
-user_id contains "-"
-
-Bots:
-
-user_id does NOT contain "-"
-
-Create:
-
-is_bot:boolean
-
-for every event.
-
-========================================================
-PARQUET SCHEMA
-==============
-
-Columns:
-
-user_id:str
-
-match_id:str
-
-map_id:str
-
-x:float
-
-y:float
-
-z:float
-
-ts:timestamp
-
-event:bytes
-
-========================================================
-EVENT TYPES
-===========
-
-Position
-
-BotPosition
-
-Loot
-
-Kill
-
-Killed
-
-BotKill
-
-BotKilled
-
-KilledByStorm
-
-========================================================
-MINIMAP CONFIGURATION
-=====================
-
-Map Size:
-
-1024 x 1024
-
-========================================================
-
-AmbroseValley
-
-scale=900
-
-origin_x=-370
-
-origin_z=-473
-
-========================================================
-
-GrandRift
-
-scale=581
-
-origin_x=-290
-
-origin_z=-290
-
-========================================================
-
-Lockdown
-
-scale=1000
-
-origin_x=-500
-
-origin_z=-500
-
-========================================================
-WORLD TO PIXEL CONVERSION
-=========================
-
-u=(x-origin_x)/scale
-
-v=(z-origin_z)/scale
-
-pixel_x=u*1024
-
-pixel_y=(1-v)*1024
-
-The frontend MUST receive:
-
-pixel_x
-pixel_y
-
-already computed.
-
-Frontend must NEVER perform coordinate conversion.
+Coordinate Conversion (Must be pre-computed before sending to frontend):
+u = (x - origin_x) / scale
+v = (z - origin_z) / scale
+pixel_x = u * 1024
+pixel_y = (1 - v) * 1024
 
 ========================================================
 TECH STACK
 ==========
-
 Python 3.12
-
-FastAPI
-
-Pydantic v2
-
-PyArrow
-
+websockets
+asyncio
 Pandas
-
+PyArrow
 NumPy
-
 Pillow
 
-Uvicorn
-
-========================================================
-IMPORTANT PERFORMANCE REQUIREMENTS
-==================================
-
-Dataset:
-
-1243 parquet files
-
-~89000 events
-
-This dataset is small.
-
-DO NOT introduce:
-
-Redis
-
-Celery
-
-Kafka
-
-PostgreSQL
-
-MongoDB
-
-DuckDB
-
-Authentication
-
-Background workers
-
-Microservices
-
-Cloud dependencies
-
-The backend should load all parquet data once during startup and keep it in memory.
-
-Implement caching where appropriate.
-
-Avoid repeated filesystem reads.
-
-Avoid repeated coordinate conversions.
+NO databases, NO Redis, NO background workers. The backend should load the parquet data into a Pandas DataFrame in memory on startup to avoid repeated disk reads.
 
 ========================================================
 PROJECT STRUCTURE
 =================
+Keep it compact and flat:
 
 backend/
-
-├── app.py
-
-├── config/
-│   ├── settings.py
-│   └── map_config.py
-
-├── models/
-│   ├── event_models.py
-│   ├── response_models.py
-
-├── services/
-│   ├── coordinate_mapper.py
-│   ├── parquet_loader.py
-│   ├── match_service.py
-│   ├── stats_service.py
-│   └── heatmap_service.py
-
-├── api/
-│   └── routes.py
-
-├── data/
-│   ├── player_data/
-│   └── minimaps/
-
+├── server.py        (WebSocket connection handling and routing)
+├── data_engine.py   (Parquet loading, Bot logic, Coordinate mapping, Stats math)
+├── heatmaps.py      (NumPy/Pillow heatmap generation)
 └── requirements.txt
 
-Generate every file.
-
 ========================================================
-MODEL DEFINITIONS
-=================
+WEBSOCKET COMMUNICATION PROTOCOL
+================================
 
-EventModel
-
-Fields:
-
-user_id:str
-
-match_id:str
-
-map_id:str
-
-x:float
-
-y:float
-
-z:float
-
-pixel_x:float
-
-pixel_y:float
-
-ts:int
-
-event:str
-
-is_bot:bool
-
-========================================================
-
-MatchResponse
-
-Fields:
-
-match_id:str
-
-map_id:str
-
-events:list
-
-========================================================
-
-MatchStatsResponse
-
-Fields:
-
-match_id:str
-
-map_id:str
-
-total_humans:int
-
-total_bots:int
-
-kills:int
-
-deaths:int
-
-loots:int
-
-storm_deaths:int
-
-duration_seconds:int
-
-========================================================
-IMPLEMENTATION DETAILS
-======================
-
-FILE
-
-config/map_config.py
-
-Create:
-
-MAP_CONFIG
-
-dictionary containing:
-
-scale
-
-origin_x
-
-origin_z
-
-for all three maps.
-
-========================================================
-
-FILE
-
-services/coordinate_mapper.py
-
-Create function:
-
-world_to_pixel(
-map_id:str,
-x:float,
-z:float
-)->tuple[float,float]
-
-Must:
-
-Validate map_id.
-
-Use MAP_CONFIG.
-
-Return:
-
-(pixel_x,pixel_y)
-
-========================================================
-
-FILE
-
-services/parquet_loader.py
-
-Create class:
-
-ParquetLoader
-
-Responsibilities:
-
-1. Load every parquet file.
-
-2. Decode event bytes.
-
-3. Create is_bot.
-
-4. Compute pixel_x.
-
-5. Compute pixel_y.
-
-6. Add date column from folder name.
-
-7. Store everything in one dataframe.
-
-Methods:
-
-load_data()
-
-get_dataframe()
-
-Must cache data in memory.
-
-Must raise meaningful exceptions.
-
-========================================================
-
-FILE
-
-services/match_service.py
-
-Create class:
-
-MatchService
-
-Methods:
-
-list_maps()
-
-list_dates()
-
-list_matches(
-map_id:str|None,
-date:str|None
-)
-
-get_match(
-match_id:str
-)
-
-Requirements:
-
-Events returned sorted by ts.
-
-Return frontend-ready responses.
-
-========================================================
-
-FILE
-
-services/stats_service.py
-
-Create class:
-
-StatsService
-
-Method:
-
-get_match_stats(
-match_id:str
-)
-
-Calculate:
-
-Humans
-
-Bots
-
-Kills
-
-Deaths
-
-Loot
-
-Storm Deaths
-
-Duration
-
-Duration:
-
-max(ts)-min(ts)
-
-Return:
-
-MatchStatsResponse
-
-========================================================
-
-FILE
-
-services/heatmap_service.py
-
-Create enum:
-
-HeatmapType
-
-TRAFFIC
-
-KILLS
-
-DEATHS
-
-LOOT
-
-========================================================
-
-Method:
-
-generate_heatmap(
-map_id:str,
-heatmap_type:str
-)
-
-========================================================
-
-Traffic Events
-
-Position
-
-BotPosition
-
-========================================================
-
-Kill Events
-
-Kill
-
-BotKill
-
-========================================================
-
-Death Events
-
-Killed
-
-BotKilled
-
-KilledByStorm
-
-========================================================
-
-Loot Events
-
-Loot
-
-========================================================
-
-Heatmap Generation
-
-Use:
-
-NumPy histogram2d
-
-Generate:
-
-1024x1024 density map
-
-Apply Gaussian blur.
-
-Normalize.
-
-Create transparent PNG.
-
-Return PNG bytes.
-
-Use Pillow only.
-
-No OpenCV dependency.
-
-========================================================
-API CONTRACTS
-=============
-
-GET /maps
-
-Response:
-
-[
-"AmbroseValley",
-"GrandRift",
-"Lockdown"
-]
-
-========================================================
-
-GET /dates
-
-Response:
-
-[
-"February_10",
-"February_11"
-]
-
-========================================================
-
-GET /matches
-
-Optional Query:
-
-map_id
-
-date
-
-Response:
-
-[
-"match1",
-"match2"
-]
-
-========================================================
-
-GET /matches/{match_id}
-
-Response:
-
+CLIENT SENDS:
 {
-"match_id":"",
-"map_id":"",
-"events":[]
+  "action": "fetch_date_data",
+  "date": "February_10"
 }
 
-========================================================
+SERVER AUTOMATICALLY RESPONDS WITH (in sequence):
 
-GET /matches/{match_id}/stats
-
-Response:
-
+1. Initial Data Payload:
 {
-"match_id":"",
-"map_id":"",
-"total_humans":0,
-"total_bots":0,
-"kills":0,
-"deaths":0,
-"loots":0,
-"storm_deaths":0,
-"duration_seconds":0
+  "type": "init_data",
+  "available_dates": ["February_10", "February_11"],
+  "requested_date": "February_10",
+  "maps_played": ["AmbroseValley", "Lockdown"]
 }
 
-========================================================
+2. Match Statistics (One message containing stats for all matches on that date):
+{
+  "type": "match_stats",
+  "data": [
+    {
+      "match_id": "...",
+      "map_id": "...",
+      "total_humans": 10,
+      "total_bots": 50,
+      "kills": 20,
+      "deaths": 20,
+      "loots": 100,
+      "storm_deaths": 2,
+      "duration_seconds": 1200
+    }
+  ]
+}
 
-GET /heatmap
+3. Match Events (Send all events for the date, sorted by timestamp):
+{
+  "type": "events_stream",
+  "data": [
+    {
+      "match_id": "...",
+      "map_id": "...",
+      "user_id": "...",
+      "event": "Kill",
+      "pixel_x": 512.5,
+      "pixel_y": 256.0,
+      "ts": 1700000000,
+      "is_bot": false
+    }
+  ]
+}
 
-Query:
-
-map_id
-
-heatmap_type
-
-Response:
-
-image/png
-
-========================================================
-FASTAPI REQUIREMENTS
-====================
-
-Enable:
-
-CORS
-
-JSON serialization
-
-Exception handling
-
-Validation
-
-Typed responses
-
-OpenAPI documentation
-
-Use dependency injection where appropriate.
-
-========================================================
-CODE QUALITY REQUIREMENTS
-=========================
-
-Every file must include:
-
-* Type hints
-* Docstrings
-* Error handling
-* Logging
-
-Avoid:
-
-Global mutable state
-
-Duplicate logic
-
-Magic numbers
-
-Hardcoded paths
-
-Use:
-
-pathlib
-
-dataclasses when useful
-
-Pydantic response models
+4. Heatmaps (Send base64 encoded PNGs for the requested date, grouped by map):
+{
+  "type": "heatmap_data",
+  "map_id": "AmbroseValley",
+  "heatmaps": {
+     "traffic": "data:image/png;base64,...",
+     "kills": "data:image/png;base64,...",
+     "deaths": "data:image/png;base64,...",
+     "loot": "data:image/png;base64,..."
+  }
+}
 
 ========================================================
 FINAL OUTPUT REQUIREMENT
 ========================
-
 Generate the entire backend project file-by-file.
-
 For each file:
-
-1. Show filepath.
-2. Explain purpose briefly.
-3. Generate complete code.
-
-Do not skip any file.
-
-Do not summarize.
-
-Start from requirements.txt and continue until app.py.
-
-END.
+1. Show the filepath.
+2. Generate the complete, simplified code.
+Do not skip any file. Keep code minimal, readable, and avoid over-engineering. Start with requirements.txt.
