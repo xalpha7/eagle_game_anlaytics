@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dashboard_controller.dart';
+import 'package:lila_black_analytics/DashboardController.dart';
+import 'package:lila_black_analytics/DashboardScreen.dart';
 import 'websocket_service.dart';
-import 'views/dashboard_screen.dart';
 
 void main() {
   // Dependency Injection setup via GetX
-  Get.put(DashboardController());
-  final wsService = Get.put(WebsocketService());
+
+  final wsService = Get.put(WebsocketService(), permanent: true);
+  Get.lazyPut(() => DashboardController(wsSocket: wsService), fenix: true);
 
   // Establish connection on app start
-  // wsService.connect();
+  wsService.connect();
 
   runApp(const LILABlackApp());
 }
