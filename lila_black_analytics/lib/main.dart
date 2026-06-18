@@ -11,7 +11,7 @@ void main() {
   Get.lazyPut(() => DashboardController(wsSocket: wsService), fenix: true);
 
   // Establish connection on app start
-  wsService.connect();
+  // wsService.connect();
 
   runApp(const LILABlackApp());
 }

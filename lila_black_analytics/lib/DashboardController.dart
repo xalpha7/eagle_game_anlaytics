@@ -102,10 +102,10 @@ class DashboardController extends GetxController {
   }
 
   void getGameplayFromDate({required date}) {
-    apiSocket.senddata(action: "fetch_match_playback", data: date);
+    apiSocket.senddata(action: "get_match_playback", data: date);
   }
 
-  void stopGameplay() {
+  void stopGameplay() { 
     _gameTimer?.cancel();
     isPlaying.value = false;
     activePlayers.clear();

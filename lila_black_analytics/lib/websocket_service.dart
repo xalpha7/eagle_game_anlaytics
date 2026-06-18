@@ -22,6 +22,7 @@ class WebsocketService extends GetxService {
 
   void connect() {
     try {
+      print("connecting to websocket");
       _channel = WebSocketChannel.connect(Uri.parse(socketUri));
       _channel!.stream.listen(
         (message) => _parseIncomingFrame(message),
@@ -35,6 +36,8 @@ class WebsocketService extends GetxService {
 
   void _parseIncomingFrame(String message) {
     try {
+      print("connecting ???" + message.toString());
+
       final Map<String, dynamic> jsonFrame = jsonDecode(message);
       final String packetType = jsonFrame['type'] ?? '';
 
@@ -71,6 +74,7 @@ class WebsocketService extends GetxService {
 
   // UI Lifecycle Outbound Triggers
   void senddata({required action, required data}) {
+    print({"action": action, "data": data}.toString());
     if (_channel != null) {
       _channel!.sink.add(
         jsonEncode({"action": action, "data": data}),
