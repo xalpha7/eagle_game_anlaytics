@@ -1,0 +1,7 @@
+import 'package:lila_black_analytics/DashboardController.dart';
+import 'package:lila_black_analytics/websocket_service.dart';
+
+class AppSession {
+  late DashboardController dashboardController;
+  late WebsocketService websocketService;
+}

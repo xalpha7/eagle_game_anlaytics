@@ -10,6 +10,10 @@ class MapView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print(
+      "controller.currentMapImage.value,>>" +
+          controller.currentMapImage.value.toString(),
+    );
     return AspectRatio(
       aspectRatio: 1.0,
       child: Container(

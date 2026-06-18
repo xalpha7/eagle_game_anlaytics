@@ -1,12 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lila_black_analytics/AppSession.dart';
 import 'package:lila_black_analytics/DashboardController.dart';
+import 'package:lila_black_analytics/MatchSelector.dart';
 import 'map_view.dart';
 
-class DashboardScreen extends StatelessWidget {
-  DashboardScreen({Key? key}) : super(key: key);
+class DashboardScreen extends StatefulWidget {
+  AppSession appSession;
+  DashboardScreen({super.key, required this.appSession});
 
-  final DashboardController controller = Get.find<DashboardController>();
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  late DashboardController controller;
+
+  @override
+  void initState() {
+    controller = widget.appSession.dashboardController;
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,36 +40,7 @@ class DashboardScreen extends StatelessWidget {
         if (controller.isPlaying.value) {
           return Center(child: MapView());
         } else {
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 2.5,
-              ),
-              itemCount: controller.displayDate.length,
-              itemBuilder: (context, index) {
-                String date = controller.displayDate[index];
-                return ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () => {controller.getGameplayFromDate(date: date)},
-                  child: Text(
-                    date.replaceAll('_', ' '),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                );
-              },
-            ),
-          );
+          return MatchSelector(appSession: widget.appSession);
         }
       }),
     );

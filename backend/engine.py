@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import pyarrow.parquet as pq
 import numpy as np
+from data_engine import DataEngine
 
 # CRITICAL: Matplotlib backend must be declared before importing pyplot 
 import matplotlib
@@ -23,9 +24,14 @@ class GameEngine:
         "Lockdown":      {"scale": 1000, "origin_x": -500, "origin_z": -500, "img": "minimaps/Lockdown_Minimap.jpg"}
     }
 
+
+    def get_all_map(self):
+        return list(self.MAP_CONFIGS.keys())
+
     def __init__(self, base_data_path: str):
         """Initializes the generator with the root directory of the player data."""
         self.base_data_path = base_data_path
+        self.data_dir = base_data_path
 
     def run_gameplay(self, date: str, target_map: str = None, match_id: str = None, highest_player_match: bool = False) -> dict:
         folder_path = os.path.join(self.base_data_path, date)

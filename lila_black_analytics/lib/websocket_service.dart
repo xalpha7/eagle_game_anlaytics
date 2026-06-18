@@ -1,23 +1,32 @@
 // lib/websocket_service.dart
 
+// ignore_for_file: strict_top_level_inference
+
 import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:lila_black_analytics/AppSession.dart';
 import 'package:lila_black_analytics/DashboardController.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class WebsocketService extends GetxService {
+  AppSession appSession;
+  WebsocketService({required this.appSession});
   WebSocketChannel? _channel;
-  final String socketUri = 'wss://eagle-game-anlaytics.onrender.com/ws';
-  // final String socketUri = 'ws://localhost:8765/ws';
+  // final String socketUri = 'wss://eagle-game-anlaytics.onrender.com/ws';
+  final String socketUri = 'ws://localhost:10000/ws';
+  // final dashcontroller = Get.put(DashboardController());
 
   @override
-  void onInit() async {
+  void onInit() {
     super.onInit();
 
+    print("calling the websocket init cal");
+
     connect();
-    // Get.lazyPut(() => DashboardController(), fenix: true);
-    await Future.delayed(Duration(seconds: 1));
-    senddata(action: "get_init_data", data: null);
+
+    Future.delayed(const Duration(seconds: 1), () {
+      senddata(action: "get_init_data", data: null);
+    });
   }
 
   void connect() {
@@ -36,17 +45,18 @@ class WebsocketService extends GetxService {
 
   void _parseIncomingFrame(String message) {
     try {
-      print("connecting ???" + message.toString());
+      // print("connecting ???" + message.toString());
 
       final Map<String, dynamic> jsonFrame = jsonDecode(message);
       final String packetType = jsonFrame['type'] ?? '';
 
       switch (packetType) {
         case 'init_data':
-          List<String> dates = List<String>.from(
-            jsonFrame['available_dates'] ?? [],
-          );
-          List<String> maps = List<String>.from(jsonFrame['maps_played'] ?? []);
+          var dates = jsonFrame['date'] ?? [];
+          var maps = jsonFrame['maps'] ?? [];
+
+          appSession.dashboardController.displayDate.value = dates;
+          appSession.dashboardController.availableMaps.value = maps;
 
           break;
 
@@ -54,14 +64,21 @@ class WebsocketService extends GetxService {
           final Map<String, dynamic> mapsPayload = jsonFrame['heatmaps'] ?? {};
 
           break;
+        case 'get_matches_per_date':
+          var mapsPayload = jsonFrame['data'] ?? {};
+          final all_maps = mapsPayload.entries
+              .map((e) => [e.key, e.value])
+              .toList();
+          appSession.dashboardController.updateMatches(all_maps);
+          break;
 
         case 'game_play':
           final Map<String, dynamic> gamePlayPayload = jsonFrame['data'] ?? {};
           var metadata = gamePlayPayload['metadata'] ?? {};
           var timelinedata = gamePlayPayload['timeline'] ?? {};
           var mapName = metadata['map_id'] ?? {};
-          final dashController = Get.find<DashboardController>();
-          dashController.runGameplay(
+
+          appSession.dashboardController.runGameplay(
             mapName: mapName,
             timelineData: timelinedata,
           );
@@ -73,13 +90,11 @@ class WebsocketService extends GetxService {
   }
 
   // UI Lifecycle Outbound Triggers
-  void senddata({required action, required data}) {
-    print({"action": action, "data": data}.toString());
+  void senddata({required action, required data, data_2}) {
+    print({"action": action, "data": data, "data_2": data_2}.toString());
     if (_channel != null) {
       _channel!.sink.add(
-        jsonEncode({"action": action, "data": data}),
-        // jsonEncode({"action": "fetch_match_playback", "data": targetedDate}),
-        // jsonEncode({"action": "get_init_data", "date": targetedDate}),
+        jsonEncode({"action": action, "data": data, "data_2": data_2}),
       );
     }
   }

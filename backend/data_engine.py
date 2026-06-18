@@ -1,4 +1,3 @@
-from engine import GameEngine
 import os
 import pandas as pd
 import pyarrow.parquet as pq
@@ -13,7 +12,7 @@ class DataEngine:
     """
 
     @staticmethod
-    def get_available_dates(engine: GameEngine) -> list[str]:
+    def get_available_dates(engine) -> list[str]:
         """Scans the base data directory and returns all unique date folders."""
         if not os.path.exists(engine.data_dir):
             print(f"Error: Base directory '{engine.data_dir}' not found.")
@@ -25,7 +24,7 @@ class DataEngine:
         ])
 
     @staticmethod
-    def get_available_matches_per_date(engine: GameEngine, date_str: str) -> dict:
+    def get_available_matches_per_date(engine, date_str: str) -> dict:
         """Scans a date folder and returns available match IDs mapped to their map IDs."""
         folder_path = os.path.join(engine.data_dir, date_str)
         if not os.path.exists(folder_path):

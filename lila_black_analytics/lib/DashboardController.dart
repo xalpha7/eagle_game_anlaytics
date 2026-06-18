@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:get/get.dart';
+import 'package:lila_black_analytics/AppSession.dart';
 import 'package:lila_black_analytics/websocket_service.dart';
 
 // --- Data Models ---
@@ -20,13 +21,12 @@ class PlayerPosition {
 }
 
 class DashboardController extends GetxController {
-  WebsocketService wsSocket;
-  DashboardController({required this.wsSocket});
   // --- State Variables ---
-  var displayDate = <String>[].obs;
+
   var isPlaying = false.obs;
   var currentMapImage = ''.obs;
-  late WebsocketService apiSocket;
+  AppSession appSession;
+  DashboardController({required this.appSession});
 
   // Map to hold active players based on user_id to easily update their positions
   var activePlayers = <String, PlayerPosition>{}.obs;
@@ -38,8 +38,6 @@ class DashboardController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    apiSocket = Get.find<WebsocketService>();
-    _loadDates();
   }
 
   @override
@@ -48,22 +46,126 @@ class DashboardController extends GetxController {
     super.onClose();
   }
 
-  void _loadDates() {
-    // Populate the initial dates list
-    displayDate.assignAll([
-      "February_10",
-      "February_11",
-      "February_12",
-      "February_13",
-    ]);
+  // =================== match selector ui ==================
+  final Rxn selectedDate = Rxn();
+  final Rxn selectedMap = Rxn();
+  final Rxn selectedMatch = Rxn();
+  final RxInt matchSelectionMode = 1.obs;
+  final RxList displayDate = [].obs;
+  final RxList availableMaps = [].obs;
+  final RxList availableMatches = [].obs;
+
+  /// Filtered matches for selected map
+  final RxList relevantMatches = [].obs;
+
+  final RxBool showRadioButtons = false.obs;
+  final RxBool showPlayHighestPlayersButton = false.obs;
+  final RxBool showAllMatchesDropdown = false.obs;
+  final RxBool showPlaySelectedMatchButton = false.obs;
+
+  void _updateUi() {
+    showRadioButtons.value = selectedDate.value != null;
+    showPlayHighestPlayersButton.value =
+        selectedDate.value != null && matchSelectionMode.value == 1;
+    showAllMatchesDropdown.value =
+        selectedDate.value != null && matchSelectionMode.value == 2;
+    showPlaySelectedMatchButton.value = selectedMatch.value != null;
   }
 
+  void onDateSelected(dynamic value) {
+    selectedDate.value = value;
+    selectedMap.value = null;
+    selectedMatch.value = null;
+    availableMaps.clear();
+    availableMatches.clear();
+    relevantMatches.clear();
+    _updateUi();
+  }
+
+  void onMatchModeChanged(int value) {
+    matchSelectionMode.value = value;
+    selectedMap.value = null;
+    selectedMatch.value = null;
+    availableMaps.clear();
+    availableMatches.clear();
+    relevantMatches.clear();
+    if (value == 2) {
+      loadMatchesList();
+    }
+    _updateUi();
+  }
+
+  void onMapSelected(dynamic value) {
+    selectedMap.value = value;
+    selectedMatch.value = null;
+    relevantMatches.assignAll(
+      availableMatches.where((match) => match[1] == value),
+    );
+    _updateUi();
+  }
+
+  void onMatchSelected(dynamic value) {
+    selectedMatch.value = value;
+    _updateUi();
+  }
+
+  /// Build map dropdown from availableMatches
+  void buildAvailableMaps() {
+    final maps = availableMatches.map((e) => e[1]).toSet().toList();
+    availableMaps.assignAll(maps);
+  }
+
+  Future<void> loadMatchesList() async {
+    availableMatches.clear();
+    availableMaps.clear();
+    relevantMatches.clear();
+
+    appSession.websocketService.senddata(
+      action: "get_matches_per_date",
+      data: selectedDate.value,
+    );
+  }
+
+  void updateMatches(List matches) {
+    availableMatches.assignAll(matches);
+    buildAvailableMaps();
+    _updateUi();
+  }
+
+  Future<void> playHighestPlayerMatch() async {
+    if (selectedDate.value == null) return;
+    appSession.websocketService.senddata(
+      action: "get_match_playback",
+      data: selectedDate.value,
+    );
+  }
+
+  Future<void> playSelectedMatch() async {
+    if (selectedDate.value == null ||
+        selectedMap.value == null ||
+        selectedMatch.value == null) {
+      return;
+    }
+    final matchId = selectedMatch.value[0];
+    appSession.websocketService.senddata(
+      action: "get_match_playback",
+      data: selectedDate.value,
+      data_2: matchId,
+    );
+  }
+
+  // ----------------------------------------
+  // ========================================= =======================
   // Triggered when a user taps a date tile
   // ignore: strict_top_level_inference
   void runGameplay({required timelineData, required mapName}) {
     // print("timelineData>>" + timelineData.toString());
     // print("mapName>>" + mapName.toString());
-    currentMapImage.value = 'assets/minimaps/${mapName}_Minimap.png';
+    var imgExtension = "png";
+    if (mapName == "Lockdown") {
+      imgExtension = "jpg";
+    }
+    currentMapImage.value = 'minimaps/${mapName}_Minimap.${imgExtension}';
 
     _timelineData = timelineData;
 
@@ -101,11 +203,7 @@ class DashboardController extends GetxController {
     }
   }
 
-  void getGameplayFromDate({required date}) {
-    apiSocket.senddata(action: "get_match_playback", data: date);
-  }
-
-  void stopGameplay() { 
+  void stopGameplay() {
     _gameTimer?.cancel();
     isPlaying.value = false;
     activePlayers.clear();
