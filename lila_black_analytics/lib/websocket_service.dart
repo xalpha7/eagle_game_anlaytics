@@ -7,7 +7,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 class WebsocketService extends GetxService {
   WebSocketChannel? _channel;
-  final String socketUri = 'ws://localhost:8765/ws';
+  final String socketUri = 'wss://eagle-game-anlaytics.onrender.com/ws';
+  // final String socketUri = 'ws://localhost:8765/ws';
 
   @override
   void onInit() async {
