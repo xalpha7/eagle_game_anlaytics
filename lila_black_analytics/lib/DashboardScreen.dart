@@ -48,8 +48,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white12,
+                  image: DecorationImage(
+                    image: AssetImage(widget.appSession.appIcon), //
+                    fit: BoxFit.cover,
+                  ),
                 ),
-                child: const Icon(Icons.analytics_outlined, size: 18),
               ),
             ),
           ),

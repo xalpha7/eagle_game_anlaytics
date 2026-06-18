@@ -5,4 +5,5 @@ class AppSession {
   late DashboardController dashboardController;
   late WebsocketService websocketService;
   String appName = "Gameplay Analytics";
+  String appIcon = "assets/icon/Icon-512.png";
 }

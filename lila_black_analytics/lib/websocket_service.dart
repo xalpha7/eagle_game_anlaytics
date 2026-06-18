@@ -31,7 +31,7 @@ class WebsocketService extends GetxService {
 
   void connect() {
     try {
-      print("connecting to websocket");
+      // print("connecting to websocket");
       _channel = WebSocketChannel.connect(Uri.parse(socketUri));
       _channel!.stream.listen(
         (message) => _parseIncomingFrame(message),
@@ -63,7 +63,7 @@ class WebsocketService extends GetxService {
         case 'get_heatmap_data':
           final heatmapPayload = jsonFrame['data'] ?? {};
           final heatmapData = heatmapPayload['heatmap'] ?? null;
-          print("heatmapData>>" + heatmapData.toString());
+          // print("heatmapData>>" + heatmapData.toString());
           appSession.dashboardController.loadHeatMapFromApi(heatmapData);
           break;
         case 'get_matches_per_date':
@@ -94,6 +94,7 @@ class WebsocketService extends GetxService {
               data_2: match_id,
             );
           });
+          appSession.dashboardController.isPlaybackFetching.value = false;
       }
     } catch (e) {
       print("Error executing payload serialization pipeline: $e");
@@ -102,7 +103,7 @@ class WebsocketService extends GetxService {
 
   // UI Lifecycle Outbound Triggers
   void senddata({required action, required data, data_2}) {
-    print({"action": action, "data": data, "data_2": data_2}.toString());
+    // print({"action": action, "data": data, "data_2": data_2}.toString());
     if (_channel != null) {
       _channel!.sink.add(
         jsonEncode({"action": action, "data": data, "data_2": data_2}),

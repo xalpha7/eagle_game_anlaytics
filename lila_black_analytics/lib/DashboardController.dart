@@ -25,6 +25,7 @@ class DashboardController extends GetxController {
   // --- State Variables ---
 
   var isPlaying = false.obs;
+  var isPlaybackFetching = false.obs;
   var currentMapImage = ''.obs;
   AppSession appSession;
   DashboardController({required this.appSession});
@@ -171,6 +172,7 @@ class DashboardController extends GetxController {
 
   Future<void> playHighestPlayerMatch() async {
     if (selectedDate.value == null) return;
+    isPlaybackFetching.value = true;
     appSession.websocketService.senddata(
       action: "get_match_playback",
       data: selectedDate.value,
@@ -184,6 +186,7 @@ class DashboardController extends GetxController {
       return;
     }
     final matchId = selectedMatch.value[0];
+    isPlaybackFetching.value = true;
     appSession.websocketService.senddata(
       action: "get_match_playback",
       data: selectedDate.value,

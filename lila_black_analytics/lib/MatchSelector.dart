@@ -74,12 +74,16 @@ class MatchSelector extends StatelessWidget {
                   c.showPlaySelectedMatchButton.value) ...[
                 MasterPage.spacing(30),
 
-                MasterPage.primaryButton(
-                  text: "Play Match",
-                  onPressed: c.showPlayHighestPlayersButton.value
-                      ? c.playHighestPlayerMatch
-                      : c.playSelectedMatch,
-                ),
+                Obx(() {
+                  return MasterPage.primaryButton(
+                    text: c.isPlaybackFetching.value == false
+                        ? "Play Match"
+                        : "Fetching game playback ....",
+                    onPressed: c.showPlayHighestPlayersButton.value
+                        ? c.playHighestPlayerMatch
+                        : c.playSelectedMatch,
+                  );
+                }),
               ],
             ],
           ),

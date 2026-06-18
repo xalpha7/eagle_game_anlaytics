@@ -104,9 +104,9 @@ class _StylishLoadingPageState extends State<StylishLoadingPage>
                   child: Container(
                     width: 90,
                     height: 90,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: const SweepGradient(
+                      gradient: SweepGradient(
                         colors: [
                           Colors.transparent,
                           Colors.cyan,
@@ -123,10 +123,12 @@ class _StylishLoadingPageState extends State<StylishLoadingPage>
                           color: Color(0xff111827),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.cloud_download_rounded,
-                          color: Colors.white,
-                          size: 32,
+
+                        child: ClipOval(
+                          child: Image.asset(
+                            widget.appSession.appIcon,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                     ),
