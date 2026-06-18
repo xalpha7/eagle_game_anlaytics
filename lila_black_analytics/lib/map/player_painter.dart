@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lila_black_analytics/DashboardController.dart';
 
-// ============================================================================
-// MAIN TELEMETRY PAINTER
-// ============================================================================
-
 class PlayerPainter extends CustomPainter {
   final List<PlayerPosition> players;
   final double baseMapSize = 1024.0;
@@ -304,15 +300,6 @@ class TelemetryLegend extends StatelessWidget {
         spacing: 20,
         runSpacing: 12,
         children: [
-          const Text(
-            "TELEMETRY KEY",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
-              fontSize: 12,
-            ),
-          ),
           _buildLegendItem('Real Player', 'player'),
           _buildLegendItem('AI Bot', 'bot'),
           _buildLegendItem('Combat Death', 'grave_combat'),
