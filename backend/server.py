@@ -2,7 +2,6 @@ import json
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import uvicorn
 from data_engine import DataEngine
-from heatmaps import generate_heatmap_b64
 
 from engine import GameEngine
 

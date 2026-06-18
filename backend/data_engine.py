@@ -1,3 +1,11 @@
+from engine import GameEngine
+import os
+import pandas as pd
+import pyarrow.parquet as pq
+import numpy as np
+
+# CRITICAL: Matplotlib backend must be declared before importing pyplot 
+import matplotlib
 class DataEngine:
     """
     Stateless processing layer extending GameEngine logic.
