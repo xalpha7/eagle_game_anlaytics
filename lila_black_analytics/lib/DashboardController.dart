@@ -202,7 +202,8 @@ class DashboardController extends GetxController {
     if (mapName == "Lockdown") {
       imgExtension = "jpg";
     }
-    currentMapImage.value = 'minimaps/${mapName}_Minimap.${imgExtension}';
+    currentMapImage.value =
+        'assets/minimaps/${mapName}_Minimap.${imgExtension}';
 
     _timelineData = timelineData;
 

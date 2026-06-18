@@ -68497,7 +68497,7 @@ a=b4.as.a
 a===$&&A.a()
 a0=h
 b2=J.c(a0,"Lockdown")?"jpg":"png"
-a.ay.sl("minimaps/"+A.j(a0)+"_Minimap."+b2)
+a.ay.sl("assets/minimaps/"+A.j(a0)+"_Minimap."+b2)
 a.cy=i
 a.db=0
 a0=a.CW
