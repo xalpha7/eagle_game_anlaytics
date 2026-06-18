@@ -64925,7 +64925,7 @@ this.a2M()
 A.jO(B.ej,new A.a43(this),t.P)},
 a2M(){var s,r,q
 try{A.jr("connecting to websocket")
-r=A.ao7(A.ach(A.kG("ws://localhost:10000/ws",0,null),null))
+r=A.ao7(A.ach(A.kG("wss://eagle-game-anlaytics.onrender.com/ws",0,null),null))
 this.at=r
 r=r.r.b
 r===$&&A.a()

@@ -12,8 +12,8 @@ class WebsocketService extends GetxService {
   AppSession appSession;
   WebsocketService({required this.appSession});
   WebSocketChannel? _channel;
-  // final String socketUri = 'wss://eagle-game-anlaytics.onrender.com/ws';
-  final String socketUri = 'ws://localhost:10000/ws';
+  final String socketUri = 'wss://eagle-game-anlaytics.onrender.com/ws';
+  // final String socketUri = 'ws://localhost:10000/ws';
   // final dashcontroller = Get.put(DashboardController());
 
   @override
