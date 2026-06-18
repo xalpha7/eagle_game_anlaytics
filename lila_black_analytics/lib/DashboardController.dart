@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:get/get.dart';
 import 'package:lila_black_analytics/AppSession.dart';
+import 'package:lila_black_analytics/map/HeatMapPainter.dart';
 import 'package:lila_black_analytics/websocket_service.dart';
 
 // --- Data Models ---
@@ -43,7 +44,43 @@ class DashboardController extends GetxController {
   @override
   void onClose() {
     _gameTimer?.cancel();
+    clearHeatMap();
     super.onClose();
+  }
+  // =============== HEATMAP DATA ===================
+
+  RxList<HeatPoint> trafficHeatMap = <HeatPoint>[].obs;
+  RxList<HeatPoint> killsHeatMap = <HeatPoint>[].obs;
+  RxList<HeatPoint> deathsHeatMap = <HeatPoint>[].obs;
+
+  void setHeatMapData({
+    required List<dynamic> traffic,
+    required List<dynamic> kills,
+    required List<dynamic> deaths,
+  }) {
+    trafficHeatMap.assignAll(traffic.map((e) => HeatPoint.fromJson(e)));
+
+    killsHeatMap.assignAll(kills.map((e) => HeatPoint.fromJson(e)));
+
+    deathsHeatMap.assignAll(deaths.map((e) => HeatPoint.fromJson(e)));
+
+    update();
+  }
+
+  void loadHeatMapFromApi(Map<String, dynamic> response) {
+    final data = response;
+
+    setHeatMapData(
+      traffic: data['traffic'] ?? [],
+      kills: data['kills'] ?? [],
+      deaths: data['deaths'] ?? [],
+    );
+  }
+
+  void clearHeatMap() {
+    trafficHeatMap.clear();
+    killsHeatMap.clear();
+    deathsHeatMap.clear();
   }
 
   // =================== match selector ui ==================
@@ -155,12 +192,12 @@ class DashboardController extends GetxController {
   }
 
   // ----------------------------------------
-  // ========================================= =======================
-  // Triggered when a user taps a date tile
+
+  final RxBool isPaused = false.obs;
+  final RxDouble playbackSpeed = 1.0.obs; // 0.5x, 1x, 2x, 4x
+
   // ignore: strict_top_level_inference
   void runGameplay({required timelineData, required mapName}) {
-    // print("timelineData>>" + timelineData.toString());
-    // print("mapName>>" + mapName.toString());
     var imgExtension = "png";
     if (mapName == "Lockdown") {
       imgExtension = "jpg";
@@ -169,21 +206,127 @@ class DashboardController extends GetxController {
 
     _timelineData = timelineData;
 
-    isPlaying.value = true;
+    // isPlaying.value = true;
+    // _currentFrame = 0;
+    // activePlayers.clear();
     _currentFrame = 0;
     activePlayers.clear();
 
+    isPlaying.value = true;
+    isPaused.value = false;
+
+    _startTimer();
     // 2. Start the game loop timer
+    // _gameTimer?.cancel();
+    // _gameTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+    //   if (_currentFrame >= _timelineData.length) {
+    //     timer.cancel(); // End of timeline
+    //     return;
+    //   }
+
+    //   _processFrame(_timelineData[_currentFrame]);
+    //   _currentFrame++;
+    // });
+  }
+
+  void restartGameplay() {
+    if (_timelineData.isEmpty) return;
+
     _gameTimer?.cancel();
-    _gameTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+
+    _currentFrame = 0;
+    activePlayers.clear();
+
+    isPaused.value = false;
+    isPlaying.value = true;
+
+    _startTimer();
+  }
+
+  void fastForward({int frames = 10}) {
+    if (_timelineData.isEmpty) return;
+
+    _currentFrame += frames;
+
+    if (_currentFrame >= _timelineData.length) {
+      _currentFrame = _timelineData.length - 1;
+    }
+
+    _rebuildState();
+  }
+
+  void rewind({int frames = 10}) {
+    if (_timelineData.isEmpty) return;
+
+    _currentFrame -= frames;
+
+    if (_currentFrame < 0) {
+      _currentFrame = 0;
+    }
+
+    _rebuildState();
+  }
+
+  void _rebuildState() {
+    activePlayers.clear();
+
+    for (int i = 0; i <= _currentFrame; i++) {
+      _processFrame(_timelineData[i]);
+    }
+  }
+
+  void pauseGameplay() {
+    if (!isPlaying.value) return;
+
+    _gameTimer?.cancel();
+    isPaused.value = true;
+  }
+
+  void resumeGameplay() {
+    if (!isPlaying.value || !isPaused.value) return;
+
+    isPaused.value = false;
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _gameTimer?.cancel();
+
+    final interval = Duration(
+      milliseconds: (500 / playbackSpeed.value).round(),
+    );
+
+    _gameTimer = Timer.periodic(interval, (timer) {
       if (_currentFrame >= _timelineData.length) {
-        timer.cancel(); // End of timeline
+        timer.cancel();
+        isPlaying.value = false;
         return;
       }
 
       _processFrame(_timelineData[_currentFrame]);
       _currentFrame++;
+      timelineProgress.value = _currentFrame / (_timelineData.length - 1);
     });
+  }
+
+  final RxDouble progress = 0.0.obs;
+  void setSpeed(double speed) {
+    playbackSpeed.value = speed;
+
+    if (isPlaying.value && !isPaused.value) {
+      _startTimer();
+    }
+  }
+
+  final RxDouble timelineProgress = 0.0.obs;
+  void seekToFrameByProgress(double progress) {
+    if (_timelineData.isEmpty) return;
+
+    _currentFrame = (progress * (_timelineData.length - 1)).round();
+
+    timelineProgress.value = progress;
+
+    _rebuildState();
   }
 
   void _processFrame(Map<String, dynamic> frame) {

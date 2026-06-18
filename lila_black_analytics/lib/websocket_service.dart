@@ -60,9 +60,11 @@ class WebsocketService extends GetxService {
 
           break;
 
-        case 'heatmap_data':
-          final Map<String, dynamic> mapsPayload = jsonFrame['heatmaps'] ?? {};
-
+        case 'get_heatmap_data':
+          final heatmapPayload = jsonFrame['data'] ?? {};
+          final heatmapData = heatmapPayload['heatmap'] ?? null;
+          print("heatmapData>>" + heatmapData.toString());
+          appSession.dashboardController.loadHeatMapFromApi(heatmapData);
           break;
         case 'get_matches_per_date':
           var mapsPayload = jsonFrame['data'] ?? {};
@@ -77,12 +79,21 @@ class WebsocketService extends GetxService {
           var metadata = gamePlayPayload['metadata'] ?? {};
           var timelinedata = gamePlayPayload['timeline'] ?? {};
           var mapName = metadata['map_id'] ?? {};
+          var match_id = metadata['match_id'] ?? null;
+          var match_date = metadata['match_date'] ?? null;
 
           appSession.dashboardController.runGameplay(
             mapName: mapName,
             timelineData: timelinedata,
           );
-          print("");
+
+          Future.delayed(const Duration(seconds: 1), () {
+            senddata(
+              action: "get_heatmap_data",
+              data: match_date,
+              data_2: match_id,
+            );
+          });
       }
     } catch (e) {
       print("Error executing payload serialization pipeline: $e");
@@ -98,25 +109,6 @@ class WebsocketService extends GetxService {
       );
     }
   }
-
-  // void fetchDateData(String date, String? mapIdFilter) {
-  //   print("mapIdFilter>>" + mapIdFilter.toString());
-  //   if (_channel != null) {
-  //     final payload = {"action": "fetch_date_data", "date": date};
-  //     if (mapIdFilter != null && mapIdFilter.isNotEmpty) {
-  //       payload["map_id"] = mapIdFilter;
-  //     }
-  //     _channel!.sink.add(jsonEncode(payload));
-  //   }
-  // }
-
-  // void fetchMatchPlayback(String matchId) {
-  //   if (_channel != null) {
-  //     _channel!.sink.add(
-  //       jsonEncode({"action": "get_match_playback", "match_id": matchId}),
-  //     );
-  //   }
-  // }
 
   @override
   void onClose() {

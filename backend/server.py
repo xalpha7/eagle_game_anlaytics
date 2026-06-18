@@ -38,11 +38,9 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     "maps": available_maps
                 })
 
-            elif action == "heatmap_data":
-                data_payload = payload.get("data", {})
-                match_date = data_payload.get("date")
-                target_match_id = data_payload.get("match_id")
-
+            elif action == "get_heatmap_data":
+                match_date = payload.get("data", None)
+                target_match_id = payload.get("data_2", None)
                 if not match_date or not target_match_id:
                     await websocket.send_json({
                         "type": "error",
@@ -53,14 +51,10 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     })
                     continue
 
-                match_df = gameplay_engine.load_match_data(
-                    match_date,
-                    target_match_id
-                )
-
+                match_df = gameplay_engine.load_match_data(match_date,target_match_id)
                 if match_df.empty:
                     await websocket.send_json({
-                        "type": "heatmap_response",
+                        "type": "get_heatmap_data",
                         "data": {
                             "error":
                             f"No telemetry files found for "
@@ -70,7 +64,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     continue
 
                 heatmap_results = gameplay_engine.get_heatmap_payload(match_df)
-                await websocket.send_json({"type": "heatmap_response","data": heatmap_results})
+                await websocket.send_json({"type": "get_heatmap_data","data": heatmap_results})
 
             elif action == "get_matches_per_date":
                 match_date = payload.get("data","February_14")
@@ -78,14 +72,14 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 await websocket.send_json({ "type": "get_matches_per_date", "data": result_data})
 
             elif action == "get_match_playback":
-                print("match_date>>")
                 match_date = payload.get( "data", "February_14")
                 match_id = payload.get( "data_2", None)
+                
                 if match_id is None:
                     result_data = gameplay_engine.run_gameplay( date=match_date, highest_player_match=True)
                 else:
                     result_data = gameplay_engine.run_gameplay( date=match_date, highest_player_match=False, match_id= match_id)
-                print("result_data>>", result_data)
+                # print("result_data>>", result_data)
                 await websocket.send_json({
                     "type": "game_play",
                     "data": result_data

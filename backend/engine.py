@@ -56,7 +56,7 @@ class GameEngine:
             return {"error": "Match data is empty or failed to load."}
         if not selected_map and 'map_id' in match_df.columns:
             selected_map = str(match_df['map_id'].iloc[0])
-        return self._format_for_frontend(match_df, target_match_id, selected_map)
+        return self._format_for_frontend(date, match_df, target_match_id, selected_map)
 
     def visualize_frontend_data(self, result_data: dict):
         """
@@ -215,7 +215,7 @@ class GameEngine:
         df['pixel_y'] = (1 - ((df['z'] - config["origin_z"]) / config["scale"])) * 1024
         return df
 
-    def _format_for_frontend(self, match_df: pd.DataFrame, match_id: str, map_id: str) -> dict:
+    def _format_for_frontend(self ,date: str, match_df: pd.DataFrame, match_id: str, map_id: str) -> dict:
         match_df = match_df.sort_values(by='ts').reset_index(drop=True)
         match_df = self._convert_to_minimap_coords(match_df, map_id)
         match_df['is_bot'] = match_df['user_id'].str.isdigit()
@@ -236,6 +236,7 @@ class GameEngine:
             "metadata": {
                 "match_id": match_id,
                 "map_id": map_id,
+                "match_date": date,
                 "map_config": self.MAP_CONFIGS.get(map_id, {}),
                 "total_humans": int(total_humans),
                 "total_bots": int(total_bots),

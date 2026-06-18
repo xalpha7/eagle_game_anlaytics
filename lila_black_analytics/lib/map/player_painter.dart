@@ -291,7 +291,7 @@ class TelemetryLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12.0),
+      padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8),
       decoration: BoxDecoration(
         color: const Color(0xFF121212).withOpacity(0.85),
         border: Border.all(
@@ -300,9 +300,9 @@ class TelemetryLegend extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(8.0),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      child: Wrap(
+        spacing: 20,
+        runSpacing: 12,
         children: [
           const Text(
             "TELEMETRY KEY",
@@ -313,19 +313,12 @@ class TelemetryLegend extends StatelessWidget {
               fontSize: 12,
             ),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 20,
-            runSpacing: 12,
-            children: [
-              _buildLegendItem('Real Player', 'player'),
-              _buildLegendItem('AI Bot', 'bot'),
-              _buildLegendItem('Combat Death', 'grave_combat'),
-              _buildLegendItem('Zone Death', 'grave_storm'),
-              _buildLegendItem('Active Gunfire', 'combat'),
-              _buildLegendItem('Looting Airdrop', 'loot'),
-            ],
-          ),
+          _buildLegendItem('Real Player', 'player'),
+          _buildLegendItem('AI Bot', 'bot'),
+          _buildLegendItem('Combat Death', 'grave_combat'),
+          _buildLegendItem('Zone Death', 'grave_storm'),
+          _buildLegendItem('Active Gunfire', 'combat'),
+          _buildLegendItem('Looting Airdrop', 'loot'),
         ],
       ),
     );
@@ -337,7 +330,7 @@ class TelemetryLegend extends StatelessWidget {
       children: [
         SizedBox(
           width: 32,
-          height: 32,
+          height: 24,
           child: CustomPaint(painter: _LegendIconPainter(iconType: type)),
         ),
         const SizedBox(width: 8),

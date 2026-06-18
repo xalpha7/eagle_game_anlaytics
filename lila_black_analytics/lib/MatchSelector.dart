@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lila_black_analytics/AppSession.dart';
 import 'package:lila_black_analytics/DashboardController.dart';
-import 'package:lila_black_analytics/Masterpage.dart';
+import 'package:lila_black_analytics/utils/Masterpage.dart';
 
 class MatchSelector extends StatelessWidget {
   final AppSession appSession;

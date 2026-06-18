@@ -94,7 +94,7 @@ class DataEngine:
 
         # Automatically extract map identity from dataset rows
         map_id = match_df['map_id'].iloc[0] if 'map_id' in match_df.columns else None
-        config = engine.map_configs.get(map_id)
+        config = engine.MAP_CONFIGS.get(map_id)
         if not config:
             return {"error": f"Map configuration for '{map_id}' missing."}
 
@@ -138,7 +138,7 @@ class DataEngine:
         return {
             "match_id": str(match_df['match_id'].iloc[0]).replace('.nakama-0', ''),
             "map_id": map_id,
-            "data": {
+            "heatmap": {
                 "traffic": _generate_sparse_matrix(pixel_x, pixel_y),
                 "kills":   _generate_sparse_matrix(pixel_x[kill_mask], pixel_y[kill_mask]),
                 "deaths":  _generate_sparse_matrix(pixel_x[death_mask], pixel_y[death_mask])

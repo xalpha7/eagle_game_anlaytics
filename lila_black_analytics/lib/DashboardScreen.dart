@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lila_black_analytics/AppSession.dart';
 import 'package:lila_black_analytics/DashboardController.dart';
+import 'package:lila_black_analytics/map/PlaybackControlls.dart';
+import 'package:lila_black_analytics/map/player_painter.dart';
+import 'package:lila_black_analytics/utils/GlassTile.dart';
 import 'package:lila_black_analytics/MatchSelector.dart';
-import 'map_view.dart';
+import 'package:lila_black_analytics/utils/VoiceOrb.dart';
+import 'map/map_view.dart';
 
 class DashboardScreen extends StatefulWidget {
   AppSession appSession;
@@ -26,23 +30,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Match Replay Dashboard'),
-        leading: Obx(
-          () => controller.isPlaying.value
-              ? IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: controller.stopGameplay,
-                )
-              : const SizedBox.shrink(),
+        backgroundColor: const Color(0xFF0B0B0F),
+        elevation: 0,
+        centerTitle: true,
+
+        leading: const SizedBox(width: 52),
+
+        title: Text(widget.appSession.appName),
+
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Center(
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white12,
+                ),
+                child: const Icon(Icons.analytics_outlined, size: 18),
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0B0B0F), Color(0xFF13151A), Color(0xFF0D1117)],
+          ),
+        ),
+        child: SafeArea(
+          child: Obx(
+            () => Padding(
+              padding: const EdgeInsets.all(2),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GlassTile(
+                      child: MatchSelector(appSession: widget.appSession),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: GlassTile(
+                      child: controller.isPlaying.value
+                          ? Column(
+                              children: [
+                                TelemetryLegend(),
+                                const SizedBox(height: 6),
+                                Expanded(child: MapView()),
+
+                                const SizedBox(height: 6),
+
+                                PlaybackControls(controller: controller),
+                              ],
+                            )
+                          : VoiceOrb_Retro(appSession: widget.appSession),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
-      body: Obx(() {
-        if (controller.isPlaying.value) {
-          return Center(child: MapView());
-        } else {
-          return MatchSelector(appSession: widget.appSession);
-        }
-      }),
     );
   }
 }

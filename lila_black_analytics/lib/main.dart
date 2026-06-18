@@ -27,7 +27,7 @@ class LILABlackApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'LILA BLACK Analytics',
+      title: appSession.appName,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
