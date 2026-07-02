@@ -91,15 +91,16 @@ class MasterPage {
     required String text,
     required VoidCallback onPressed,
     double height = 50,
+    bool isDisabled = false,
   }) {
     return SizedBox(
       width: double.infinity,
       height: height,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: isDisabled ? null : onPressed,
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          backgroundColor: accentBlue,
+          backgroundColor: isDisabled ? Colors.transparent : accentBlue,
           foregroundColor: Colors.white,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(

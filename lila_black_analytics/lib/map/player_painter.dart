@@ -282,59 +282,74 @@ class PlayerPainter extends CustomPainter {
 // ============================================================================
 
 class TelemetryLegend extends StatelessWidget {
-  const TelemetryLegend({Key? key}) : super(key: key);
+  const TelemetryLegend({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
         color: const Color(0xFF121212).withOpacity(0.85),
         border: Border.all(
-          color: const Color(0xFF00E5FF).withOpacity(0.5),
-          width: 1.5,
+          color: const Color(0xFF00E5FF).withOpacity(0.45),
+          width: 1,
         ),
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Wrap(
-        spacing: 20,
-        runSpacing: 12,
-        children: [
-          _buildLegendItem('Real Player', 'player'),
-          _buildLegendItem('AI Bot', 'bot'),
-          _buildLegendItem('Combat Death', 'grave_combat'),
-          _buildLegendItem('Zone Death', 'grave_storm'),
-          _buildLegendItem('Active Gunfire', 'combat'),
-          _buildLegendItem('Looting Airdrop', 'loot'),
+        spacing: 10,
+        runSpacing: 4,
+        alignment: WrapAlignment.center,
+        children: const [
+          _LegendItem(label: 'Player', type: 'player'),
+          _LegendItem(label: 'Bot', type: 'bot'),
+          _LegendItem(label: 'Combat', type: 'grave_combat'),
+          _LegendItem(label: 'Zone', type: 'grave_storm'),
+          _LegendItem(label: 'Gunfire', type: 'combat'),
+          _LegendItem(label: 'Airdrop', type: 'loot'),
         ],
       ),
     );
   }
+}
 
-  Widget _buildLegendItem(String label, String type) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 32,
-          height: 24,
-          child: CustomPaint(painter: _LegendIconPainter(iconType: type)),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
+class _LegendItem extends StatelessWidget {
+  final String label;
+  final String type;
+
+  const _LegendItem({required this.label, required this.type});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 88, // 3 items fit comfortably on most phones
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 22,
+            height: 18,
+            child: CustomPaint(painter: _LegendIconPainter(iconType: type)),
           ),
-        ),
-      ],
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                height: 1.0,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-// Painter specifically built to duplicate the logic of the main map but centered for UI
 class _LegendIconPainter extends CustomPainter {
   final String iconType;
 

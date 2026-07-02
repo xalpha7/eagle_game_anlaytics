@@ -38,7 +38,11 @@ class HeatMapPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Draw traffic heat nodes
+    final bool isMobile = size.width < 600;
+
+    // ==========================
+    // Traffic Heat Nodes
+    // ==========================
     if (traffic.isNotEmpty) {
       final maxValue = traffic
           .map((e) => e.value)
@@ -46,30 +50,41 @@ class HeatMapPainter extends CustomPainter {
 
       for (final point in traffic) {
         final intensity = (point.value / maxValue).clamp(0.0, 1.0);
-        drawTrafficNode(canvas, _mapPoint(point, size), intensity);
+        drawTrafficNode(canvas, _mapPoint(point, size), intensity, isMobile);
       }
     }
 
-    // Draw kills
+    // ==========================
+    // Kill Markers
+    // ==========================
     for (final point in kills) {
-      drawKillNode(canvas, _mapPoint(point, size));
+      drawKillNode(canvas, _mapPoint(point, size), isMobile);
     }
 
-    // Draw deaths
+    // ==========================
+    // Death Markers
+    // ==========================
     for (final point in deaths) {
-      drawDeathNode(canvas, _mapPoint(point, size));
+      drawDeathNode(canvas, _mapPoint(point, size), isMobile);
     }
 
-    // Draw legend
-    drawLegend(canvas, size);
+    // ==========================
+    // Legend
+    // ==========================
+    drawLegend(canvas, size, isMobile);
   }
 
   // ==================================================
   // MAP NODES
   // ==================================================
 
-  void drawTrafficNode(Canvas canvas, Offset center, double intensity) {
-    final radius = 15 + (intensity * 70);
+  void drawTrafficNode(
+    Canvas canvas,
+    Offset center,
+    double intensity,
+    bool isMobile,
+  ) {
+    final radius = isMobile ? 10 + (intensity * 40) : 15 + (intensity * 70);
 
     final shader = RadialGradient(
       colors: [
@@ -83,31 +98,36 @@ class HeatMapPainter extends CustomPainter {
     canvas.drawCircle(center, radius, Paint()..shader = shader);
   }
 
-  void drawKillNode(Canvas canvas, Offset center) {
-    canvas.drawCircle(center, 10, Paint()..color = Colors.greenAccent);
+  void drawKillNode(Canvas canvas, Offset center, bool isMobile) {
+    final innerRadius = isMobile ? 5.0 : 8.0;
+    final outerRadius = isMobile ? 10.0 : 18.0;
+
+    canvas.drawCircle(center, innerRadius, Paint()..color = Colors.greenAccent);
 
     canvas.drawCircle(
       center,
-      22,
+      outerRadius,
       Paint()..color = Colors.greenAccent.withOpacity(0.25),
     );
   }
 
-  void drawDeathNode(Canvas canvas, Offset center) {
+  void drawDeathNode(Canvas canvas, Offset center, bool isMobile) {
+    final crossSize = isMobile ? 5.0 : 8.0;
+
     final paint = Paint()
       ..color = Colors.redAccent
-      ..strokeWidth = 3
+      ..strokeWidth = isMobile ? 2 : 3
       ..style = PaintingStyle.stroke;
 
     canvas.drawLine(
-      Offset(center.dx - 8, center.dy - 8),
-      Offset(center.dx + 8, center.dy + 8),
+      Offset(center.dx - crossSize, center.dy - crossSize),
+      Offset(center.dx + crossSize, center.dy + crossSize),
       paint,
     );
 
     canvas.drawLine(
-      Offset(center.dx + 8, center.dy - 8),
-      Offset(center.dx - 8, center.dy + 8),
+      Offset(center.dx + crossSize, center.dy - crossSize),
+      Offset(center.dx - crossSize, center.dy + crossSize),
       paint,
     );
   }
@@ -116,48 +136,81 @@ class HeatMapPainter extends CustomPainter {
   // LEGEND
   // ==================================================
 
-  void drawLegend(Canvas canvas, Size size) {
-    const double padding = 16;
-    const double width = 190;
-    const double height = 110;
+  void drawLegend(Canvas canvas, Size size, bool isMobile) {
+    final double padding = isMobile ? 8 : 16;
+    final double legendWidth = isMobile ? 120 : 165;
+    final double legendHeight = isMobile ? 70 : 105;
+
+    final double fontSize = isMobile ? 9 : 13;
+    final double rowSpacing = isMobile ? 18 : 30;
+
+    // Top-right corner
+    final double left = size.width - legendWidth - padding;
+    final double top = padding;
 
     final legendRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(padding, size.height - height - padding, width, height),
-      const Radius.circular(12),
+      Rect.fromLTWH(left, top, legendWidth, legendHeight),
+      Radius.circular(isMobile ? 8 : 12),
     );
 
     // Background
     canvas.drawRRect(
       legendRect,
-      Paint()..color = Colors.black.withOpacity(0.7),
+      Paint()..color = Colors.black.withOpacity(0.72),
     );
 
-    final startX = padding + 25;
-    final textX = padding + 60;
+    final double iconX = left + (isMobile ? 14 : 18);
+    final double textX = left + (isMobile ? 28 : 42);
+
+    final double firstRowY = top + (isMobile ? 18 : 25);
 
     // Traffic
-    drawTrafficNode(canvas, Offset(startX, size.height - 90), 0.8);
+    drawTrafficNode(
+      canvas,
+      Offset(iconX, firstRowY),
+      isMobile ? 0.35 : 0.55,
+      isMobile,
+    );
 
-    _drawText(canvas, 'Traffic', Offset(textX, size.height - 98));
+    _drawText(
+      canvas,
+      'Traffic',
+      Offset(textX, firstRowY - (fontSize * 0.6)),
+      fontSize,
+    );
 
     // Kills
-    drawKillNode(canvas, Offset(startX, size.height - 55));
+    drawKillNode(canvas, Offset(iconX, firstRowY + rowSpacing), isMobile);
 
-    _drawText(canvas, 'Kills', Offset(textX, size.height - 63));
+    _drawText(
+      canvas,
+      'Kills',
+      Offset(textX, firstRowY + rowSpacing - (fontSize * 0.6)),
+      fontSize,
+    );
 
     // Deaths
-    drawDeathNode(canvas, Offset(startX, size.height - 20));
+    drawDeathNode(
+      canvas,
+      Offset(iconX, firstRowY + (rowSpacing * 2)),
+      isMobile,
+    );
 
-    _drawText(canvas, 'Deaths', Offset(textX, size.height - 28));
+    _drawText(
+      canvas,
+      'Deaths',
+      Offset(textX, firstRowY + (rowSpacing * 2) - (fontSize * 0.6)),
+      fontSize,
+    );
   }
 
-  void _drawText(Canvas canvas, String text, Offset offset) {
+  void _drawText(Canvas canvas, String text, Offset offset, double fontSize) {
     final textPainter = TextPainter(
       text: TextSpan(
         text: text,
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.white,
-          fontSize: 14,
+          fontSize: fontSize,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -165,6 +218,7 @@ class HeatMapPainter extends CustomPainter {
     );
 
     textPainter.layout();
+
     textPainter.paint(canvas, offset);
   }
 
