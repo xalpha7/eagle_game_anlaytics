@@ -1,5 +1,5 @@
 name: lila_black_analytics
-description: "A new Flutter project."
+description: "A real-time esports analytics and visualization platform for player tracking, performance analysis, and strategic insights."
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
